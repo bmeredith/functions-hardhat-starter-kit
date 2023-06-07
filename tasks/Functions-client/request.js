@@ -52,7 +52,7 @@ task("functions-request", "Initiates a request from a Functions client contract"
     }
 
     // Attach to the required contracts
-    const clientContractFactory = await ethers.getContractFactory("FunctionsConsumer")
+    const clientContractFactory = await ethers.getContractFactory("CommunityEngine")
     const clientContract = clientContractFactory.attach(contractAddr)
     const OracleFactory = await ethers.getContractFactory("contracts/dev/functions/FunctionsOracle.sol:FunctionsOracle")
     const oracle = await OracleFactory.attach(networks[network.name]["functionsOracleProxy"])
