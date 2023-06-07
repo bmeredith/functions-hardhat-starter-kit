@@ -24,7 +24,7 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
     string tweet;
   }
 
-  struct Agreement {
+  struct KOLProjectMapping {
     address owner;
     string projectName;
   }
@@ -33,11 +33,14 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
   bytes public latestResponse;
   bytes public latestError;
 
-  /// @notice A KOL's list of signed agreements with project owners.
-  mapping(address => Agreement[]) public kolAgreements;
+  /// @notice A KOL's list of project names with their respective project owner.
+  mapping(address => KOLProjectMapping[]) public kolProjectMappings;
 
   //// @notice A project owner's projects.
   mapping(address => mapping(string => Project)) public projects;
+
+  /// @notice A project owner's list of project names.
+  mapping(address => string[]) public projectOwnerProjectNames;
 
   event OCRResponse(bytes32 indexed requestId, bytes result, bytes err);
 
@@ -65,6 +68,9 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
       exists: true,
       tweet: ""
     });
+
+    kolProjectMappings[kol].push(KOLProjectMapping({owner: msg.sender, projectName: projectName}));
+    projectOwnerProjectNames[msg.sender].push(projectName);
   }
 
   /// @notice Allows for a KOL of a project to activate project.
@@ -77,22 +83,34 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
       revert AgreementAlreadySigned();
     }
 
-    kolAgreements[msg.sender].push(Agreement({owner: project.owner, projectName: projectName}));
-
     project.kolHasAgreed = true;
     project.tweet = tweet;
   }
 
+  /// @notice Returns an array of Projects a KOL is associated with.
   function getKOLProjects(address account) external view returns (Project[] memory) {
-    Agreement[] memory agreements = kolAgreements[account];
-    Project[] memory kolProjects = new Project[](agreements.length);
+    KOLProjectMapping[] memory projectMappings = kolProjectMappings[account];
+    Project[] memory kolProjects = new Project[](projectMappings.length);
 
-    for (uint256 i = 0; i < agreements.length; i++) {
-      Project memory project = projects[agreements[i].owner][agreements[i].projectName];
+    for (uint256 i = 0; i < projectMappings.length; i++) {
+      Project memory project = projects[projectMappings[i].owner][projectMappings[i].projectName];
       kolProjects[i] = project;
     }
 
     return kolProjects;
+  }
+
+  /// @notice Returns an array of Projects a project owner has setup.
+  function getProjectOwnerProjects(address account) external view returns (Project[] memory) {
+    string[] memory ownerProjectNames = projectOwnerProjectNames[msg.sender];
+    Project[] memory ownerProjects = new Project[](ownerProjectNames.length);
+
+    for (uint256 i = 0; i < ownerProjectNames.length; i++) {
+      Project memory project = projects[account][ownerProjectNames[i]];
+      ownerProjects[i] = project;
+    }
+
+    return ownerProjects;
   }
 
   /**
