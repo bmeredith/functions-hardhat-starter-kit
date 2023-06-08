@@ -8,6 +8,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 error AgreementAlreadySigned();
 error ProjectDoesNotExist();
+error ProjectRequiresKeywords();
 error SignerIsNotKOL();
 
 contract CommunityEngine is FunctionsClient, ConfirmedOwner {
@@ -23,7 +24,7 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
     bool isComplete;
     bool kolHasAgreed;
     bool exists;
-    string tweet;
+    string[] tweetKeywords;
   }
 
   struct KOLProjectMapping {
@@ -70,7 +71,7 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
       isComplete: false,
       kolHasAgreed: false,
       exists: true,
-      tweet: ""
+      tweetKeywords: new string[](0)
     });
 
     kolProjectMappings[kol].push(KOLProjectMapping({owner: msg.sender, projectName: projectName}));
@@ -78,7 +79,11 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
   }
 
   /// @notice Allows for a KOL of a project to activate project.
-  function signAgreement(string memory projectName, string memory tweet) external {
+  function signAgreement(string memory projectName, string[] memory tweetKeywords) external {
+    if (tweetKeywords.length == 0) {
+      revert ProjectRequiresKeywords();
+    }
+
     Project storage project = projects[msg.sender][projectName];
     if (!project.exists) {
       revert ProjectDoesNotExist();
@@ -91,7 +96,10 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
     }
 
     project.kolHasAgreed = true;
-    project.tweet = tweet;
+
+    for (uint256 i = 0; i < tweetKeywords.length; i++) {
+      project.tweetKeywords.push(tweetKeywords[i]);
+    }
   }
 
   /// @notice Returns an array of Projects a KOL is associated with.
@@ -174,10 +182,10 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
       KOLProjectMapping memory projectMapping = requestIdToProjectMapping[requestId];
       Project storage project = projects[projectMapping.owner][projectMapping.projectName];
 
-      bool tweetFound = (uint256(bytes32(response)) % 2) == 1;
+      bool keywordsFound = (uint256(bytes32(response)) % 2) == 1;
 
       // project was success, pay the kol the agreed upon tokens
-      if (tweetFound) {
+      if (keywordsFound) {
         transferTokens(project.kol, project.tokenAddress, project.numTokensToPayout);
         project.isComplete = true;
       } else {
