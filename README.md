@@ -2,6 +2,7 @@
 
 - [Chainlink Functions Starter Kit](#chainlink-functions-starter-kit)
 - [Overview](#overview)
+  - [Run Request](#run-request)
   - [Supported Networks](#supported-networks)
     - [Mainnets](#mainnets)
     - [Testnets](#testnets)
@@ -25,6 +26,12 @@
 - [Gas Spikes](#gas-spikes)
 
 # Overview
+
+## Run Request
+
+npx hardhat functions-deploy-communityengine --network ethereumSepolia --verify true
+npx hardhat functions-sub-add --network ethereumSepolia --subid 444 --contract 0xC1af5Ce5c0fD648379B3f447dBa25D2388174ae1
+npx hardhat functions-request --subid 444 --network ethereumSepolia --gaslimit 300000 --contract 0xC1af5Ce5c0fD648379B3f447dBa25D2388174ae1 --configpath .\Functions-request-config.js
 
 <p><b>This project is currently in a closed beta. Request access to send on-chain requests here <a href="https://functions.chain.link/">https://functions.chain.link/</a></b></p>
 
