@@ -24,7 +24,7 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
     bool isComplete;
     bool kolHasAgreed;
     bool exists;
-    string twitterHandle;
+    string kolTwitterHandle;
     string[] tweetKeywords;
   }
 
@@ -57,9 +57,13 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
     address kol,
     address tokenAddress,
     uint256 numTokensToPayout,
-    string memory twitterHandle
+    string memory kolTwitterHandle,
+    string[] memory tweetKeywords
   ) external {
     require(numTokensToPayout > 0, "payment must be greater than 0");
+    if (tweetKeywords.length == 0) {
+      revert ProjectRequiresKeywords();
+    }
 
     // deposit tokens into contract
     IERC20(tokenAddress).safeTransferFrom(msg.sender, address(this), numTokensToPayout);
@@ -73,8 +77,8 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
       isComplete: false,
       kolHasAgreed: false,
       exists: true,
-      twitterHandle: twitterHandle,
-      tweetKeywords: new string[](0)
+      kolTwitterHandle: kolTwitterHandle,
+      tweetKeywords: tweetKeywords
     });
 
     kolProjectMappings[kol].push(KOLProjectMapping({owner: msg.sender, projectName: projectName}));
@@ -82,12 +86,8 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
   }
 
   /// @notice Allows for a KOL of a project to activate project.
-  function signAgreement(string memory projectName, string[] memory tweetKeywords) external {
-    if (tweetKeywords.length == 0) {
-      revert ProjectRequiresKeywords();
-    }
-
-    Project storage project = projects[msg.sender][projectName];
+  function signAgreement(address owner, string memory projectName) external {
+    Project storage project = projects[owner][projectName];
     if (!project.exists) {
       revert ProjectDoesNotExist();
     }
@@ -99,10 +99,6 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
     }
 
     project.kolHasAgreed = true;
-
-    for (uint256 i = 0; i < tweetKeywords.length; i++) {
-      project.tweetKeywords.push(tweetKeywords[i]);
-    }
   }
 
   /// @notice Returns an array of Projects a KOL is associated with.
@@ -144,7 +140,7 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
   function executeRequest(
     string calldata source,
     bytes calldata secrets,
-    string[] calldata args, // args in sequence are: owner, projectName, twitterHandle
+    string[] calldata args, // args in sequence are: owner, projectName, twitterHandle, list of comma-separated keywords
     uint64 subscriptionId,
     uint32 gasLimit
   ) public onlyOwner returns (bytes32) {
