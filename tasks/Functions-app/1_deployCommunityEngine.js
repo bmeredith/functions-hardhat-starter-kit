@@ -1,5 +1,5 @@
 const { types } = require("hardhat/config")
-const { VERIFICATION_BLOCK_CONFIRMATIONS, networks } = require("../../networks")
+const { DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS, networks } = require("../../networks")
 
 task("functions-deploy-communityengine", "Deploys the CommunityEngine contract")
   .addOptionalParam("verify", "Set to true to verify client contract", true, types.boolean)
@@ -22,9 +22,9 @@ task("functions-deploy-communityengine", "Deploys the CommunityEngine contract")
     const clientContract = await clientContractFactory.deploy(oracleAddress)
 
     console.log(
-      `\nWaiting ${VERIFICATION_BLOCK_CONFIRMATIONS} blocks for transaction ${clientContract.deployTransaction.hash} to be confirmed...`
+      `\nWaiting ${DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS} blocks for transaction ${clientContract.deployTransaction.hash} to be confirmed...`
     )
-    await clientContract.deployTransaction.wait(VERIFICATION_BLOCK_CONFIRMATIONS)
+    await clientContract.deployTransaction.wait(DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS)
 
     // Verify the CommunityEngine Contract
     const verifyContract = taskArgs.verify
@@ -32,7 +32,7 @@ task("functions-deploy-communityengine", "Deploys the CommunityEngine contract")
     if (verifyContract && (process.env.POLYGONSCAN_API_KEY || process.env.ETHERSCAN_API_KEY)) {
       try {
         console.log("\nVerifying contract...")
-        await clientContract.deployTransaction.wait(Math.max(6 - VERIFICATION_BLOCK_CONFIRMATIONS, 0))
+        await clientContract.deployTransaction.wait(Math.max(6 - DEFAULT_VERIFICATION_BLOCK_CONFIRMATIONS, 0))
         await run("verify:verify", {
           address: clientContract.address,
           constructorArguments: [oracleAddress],

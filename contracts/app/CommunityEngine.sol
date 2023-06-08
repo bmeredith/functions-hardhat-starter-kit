@@ -15,6 +15,7 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
 
   struct Project {
     address owner;
+    string name;
     address kol;
     address tokenAddress;
     uint256 numTokensToPayout;
@@ -38,6 +39,7 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
 
   //// @notice A project owner's projects.
   mapping(address => mapping(string => Project)) public projects;
+  mapping(bytes32 => KOLProjectMapping) public requestIdToProjectMapping;
 
   /// @notice A project owner's list of project names.
   mapping(address => string[]) public projectOwnerProjectNames;
@@ -60,6 +62,7 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
 
     projects[msg.sender][projectName] = Project({
       owner: msg.sender,
+      name: projectName,
       kol: kol,
       tokenAddress: tokenAddress,
       numTokensToPayout: numTokensToPayout,
@@ -126,7 +129,7 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
   function executeRequest(
     string calldata source,
     bytes calldata secrets,
-    string[] calldata args, // args in sequence are: ArtistID, artistname,  lastListenerCount, artist email
+    string[] calldata args, // args in sequence are: owner, projectName
     uint64 subscriptionId,
     uint32 gasLimit
   ) public onlyOwner returns (bytes32) {
@@ -143,7 +146,12 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
     // Update storage variables.
     bytes32 assignedReqID = sendRequest(req, subscriptionId, gasLimit);
     latestRequestId = assignedReqID;
-    //latestArtistRequestedId = args[0];
+
+    requestIdToProjectMapping[assignedReqID] = KOLProjectMapping({
+      owner: address(bytes20(bytes(args[0]))),
+      projectName: args[1]
+    });
+
     return assignedReqID;
   }
 
@@ -160,27 +168,22 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
     latestError = err;
     emit OCRResponse(requestId, response, err);
 
-    // Artist contract for payment logic here.
-    // Artist gets a fixed rate for every addition 1000 active monthly listeners.
     bool nilErr = (err.length == 0);
     if (nilErr) {
-      // string memory artistId = latestArtistRequestedId;
-      // (int256 latestListenerCount, int256 diffListenerCount) = abi.decode(response, (int256, int256));
-      // if (diffListenerCount <= 0) {
-      //     // No payments due.
-      //     return;
-      // }
-      // // Pay the artist at 'artistData[latestArtistRequestedId].walletAddress'.
-      // uint8 stcDecimals = IStableCoin(s_stc).decimals();
-      // // Artist gets 1 STC per  10000 additional streams.
-      // uint256 amountDue = (uint256(diffListenerCount) * 1 * 10 ** stcDecimals) / 10000;
-      // // TODO @Zubin disable solhint
-      // // console.log("\nAmount Due To Artist: ", amountDue);
-      // payArtist(artistId, amountDue);
-      // // Update Artist Mapping.
-      // artistData[artistId].lastListenerCount = uint256(latestListenerCount);
-      // artistData[artistId].lastPaidAmount = amountDue;
-      // artistData[artistId].totalPaid += amountDue;
+      KOLProjectMapping memory projectMapping = requestIdToProjectMapping[requestId];
+      Project storage project = projects[projectMapping.owner][projectMapping.projectName];
+
+      bool tweetFound = (uint256(bytes32(response)) % 2) == 1;
+
+      // project was success, pay the kol the agreed upon tokens
+      if (tweetFound) {
+        transferTokens(project.kol, project.tokenAddress, project.numTokensToPayout);
+        project.isComplete = true;
+      } else {
+        // kol broke the rules :( send tokens back to the project owner
+        transferTokens(project.owner, project.tokenAddress, project.numTokensToPayout);
+        project.isComplete = true;
+      }
     }
   }
 
@@ -192,5 +195,7 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
     addExternalRequest(oracleAddress, requestId);
   }
 
-  function payKOL(string memory projectName) private {}
+  function transferTokens(address account, address tokenAddress, uint256 numTokensToPayout) private {
+    IERC20(tokenAddress).safeTransfer(account, numTokensToPayout);
+  }
 }
