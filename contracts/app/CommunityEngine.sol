@@ -24,6 +24,7 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
     bool isComplete;
     bool kolHasAgreed;
     bool exists;
+    string twitterHandle;
     string[] tweetKeywords;
   }
 
@@ -55,7 +56,8 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
     string memory projectName,
     address kol,
     address tokenAddress,
-    uint256 numTokensToPayout
+    uint256 numTokensToPayout,
+    string memory twitterHandle
   ) external {
     require(numTokensToPayout > 0, "payment must be greater than 0");
 
@@ -71,6 +73,7 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
       isComplete: false,
       kolHasAgreed: false,
       exists: true,
+      twitterHandle: twitterHandle,
       tweetKeywords: new string[](0)
     });
 
@@ -141,7 +144,7 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
   function executeRequest(
     string calldata source,
     bytes calldata secrets,
-    string[] calldata args, // args in sequence are: owner, projectName
+    string[] calldata args, // args in sequence are: owner, projectName, twitterHandle
     uint64 subscriptionId,
     uint32 gasLimit
   ) public onlyOwner returns (bytes32) {
