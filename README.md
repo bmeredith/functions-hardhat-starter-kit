@@ -26,7 +26,7 @@ If the KOL tweets out using the agreed upon keywords, the Chainlink Functions co
       - _ETHEREUM_SEPOLIA_RPC_URL_ for the Sepolia network RPC
       - _PRIVATE_KEY_ for your development wallet
       - _ETHERSCAN_API_KEY_ for verifying the deployed contracts on [Etherscan](https://sepolia.etherscan.io)
-      - _MAINLINE_API_KEY_ for retrieving a KOL's tweets from a Chainlink Function using Mainline's API
+      - _MAINLINE_API_KEY_ for retrieving a KOL's tweets from a Chainlink Function using [Mainline's API](https://getmainline.io)
 4. There are two files to notice that the default example will use:
    - _contracts/app/CommunityEngine.sol_ contains the smart contract that will receive the data
    - _app.request.js_ contains JavaScript code that will be executed by each node of the DON<br><br>
