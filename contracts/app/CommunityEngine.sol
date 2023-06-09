@@ -7,6 +7,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 error AgreementAlreadySigned();
+error AgreementNotSigned();
+error ProjectAlreadyCompleted();
 error ProjectDoesNotExist();
 error ProjectRequiresKeywords();
 error SignerIsNotKOL();
@@ -154,11 +156,21 @@ contract CommunityEngine is FunctionsClient, ConfirmedOwner {
       req.addArgs(args);
     }
 
+    address owner = parseAddr(args[0]);
+    string memory projectName = args[1];
+    Project memory project = projects[owner][projectName];
+    if (!project.kolHasAgreed) {
+      revert AgreementNotSigned();
+    }
+    if (project.isComplete) {
+      revert ProjectAlreadyCompleted();
+    }
+
     // Update storage variables.
     bytes32 assignedReqID = sendRequest(req, subscriptionId, gasLimit);
     latestRequestId = assignedReqID;
 
-    requestIdToProjectMapping[assignedReqID] = KOLProjectMapping({owner: parseAddr(args[0]), projectName: args[1]});
+    requestIdToProjectMapping[assignedReqID] = KOLProjectMapping({owner: owner, projectName: projectName});
 
     return assignedReqID;
   }
