@@ -1,6 +1,6 @@
 # Mainline Community Engine - Reinventing KOL Collaborations
 
-This use case showcases how Chainlink Functions can be used to facilitate a agreement between a project owner and a KOL, with Chainlink Functions being used to obtain the KOL's tweets.
+This use case showcases how Chainlink Functions can be used to facilitate a agreement between a project owner and a Key Opinion Leader (KOL), with Chainlink Functions being used to obtain the KOL's tweets.
 
 The CommunityEngine contract represents an on-chain agreement and payment contract between a project owner and the KOL. Chainlink Functions is used to verify the KOL's tweets for the project based on the agreement signed, using Mainline's API. The KOL is paid in USDC. If the KOL fails to meet the agreement requirements, the USDC is then returned to the project owner.
 
